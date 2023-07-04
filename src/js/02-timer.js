@@ -2,7 +2,6 @@ import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
 import Notiflix from "notiflix";
 
-
 const datetimePicker = document.getElementById("datetime-picker");
 const startButton = document.querySelector("[data-start]");
 const daysElement = document.querySelector("[data-days]");
@@ -10,8 +9,10 @@ const hoursElement = document.querySelector("[data-hours]");
 const minutesElement = document.querySelector("[data-minutes]");
 const secondsElement = document.querySelector("[data-seconds]");
 
+let flatpickrInstance;
+let countdownInterval;
 
-flatpickr(datetimePicker, {
+flatpickrInstance = flatpickr(datetimePicker, {
   enableTime: true,
   time_24hr: true,
   defaultDate: new Date(),
@@ -27,9 +28,6 @@ flatpickr(datetimePicker, {
     }
   },
 });
-
-let countdownInterval;
-
 
 function startCountdown() {
   const selectedDate = new Date(datetimePicker.value);
@@ -47,6 +45,8 @@ function startCountdown() {
     if (difference <= 0) {
       clearInterval(countdownInterval);
       Notiflix.Notify.success("Countdown completed");
+      flatpickrInstance.destroy(); // Зупинити календар
+      return;
     }
 
     const { days, hours, minutes, seconds } = convertMs(difference);
@@ -56,16 +56,18 @@ function startCountdown() {
     minutesElement.textContent = addLeadingZero(minutes);
     secondsElement.textContent = addLeadingZero(seconds);
   }, 1000);
+  
+  if (difference <= 0) {
+    clearInterval(countdownInterval);
+    Notiflix.Notify.warning("Please choose a date in the future");
+  }
 }
 
-
 startButton.addEventListener("click", startCountdown);
-
 
 function addLeadingZero(value) {
   return String(value).padStart(2, "0");
 }
-
 
 function convertMs(ms) {
   const second = 1000;
